@@ -7,16 +7,30 @@
   }
   let mapElement;
   let map;
+  let cluster;
 
-  let points = Array.from(Array(1000).keys()).map(() => [
-    randomIntFromInterval(-13, -16),
-    randomIntFromInterval(-43, -46),
+  let points = Array.from(Array(100000).keys()).map(() => [
+    randomIntFromInterval(-4, -33),
+    randomIntFromInterval(-34, -69),
   ]);
 
   onMount(async () => {
     const leaflet = await import("leaflet");
+    const { MarkerClusterGroup } = await import("leaflet.markercluster");
 
-    map = leaflet.map(mapElement).setView([-15, -44], 13);
+    map = leaflet.map(mapElement).setView(
+      [
+        points.reduce((sum, value) => {
+          return sum + value[0];
+        }, 0) / points.length,
+        [
+          points.reduce((sum, value) => {
+            return sum + value[1];
+          }, 0) / points.length,
+        ],
+      ],
+      5,
+    );
 
     leaflet
       .tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -25,7 +39,11 @@
       })
       .addTo(map);
 
-    points.forEach((point) => leaflet.marker(point).addTo(map));
+    let markers = new MarkerClusterGroup();
+
+    points.forEach((point) => markers.addLayer(leaflet.marker(point)));
+
+    map.addLayer(markers);
   });
 
   onDestroy(async () => {
@@ -42,7 +60,9 @@
 
 <style>
   @import "leaflet/dist/leaflet.css";
+  @import "leaflet.markercluster/dist/MarkerCluster.Default.css";
   main div {
     height: 800px;
+    width: 800px;
   }
 </style>
